@@ -14,14 +14,12 @@ router = APIRouter(
     dependencies=[Depends(get_current_admin_user)]
 )
 
-# --- O resto do ficheiro permanece exatamente o mesmo ---
 @router.post("/users", response_model=schemas.UserInDB, status_code=status.HTTP_201_CREATED, summary="Cria um novo utilizador")
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), admin_user: models.User = Depends(get_current_admin_user)):
     if db.query(models.User).filter(models.User.username == user.username).first():
         raise HTTPException(status_code=400, detail="Nome de utilizador já existe")
     if db.query(models.User).filter(models.User.email == user.email).first():
         raise HTTPException(status_code=400, detail="E-mail já registado")
-
     try:
         hashed_password = get_password_hash(user.password)
         new_user = models.User(username=user.username, email=user.email, hashed_password=hashed_password, role=user.role)
@@ -44,11 +42,9 @@ def read_users(db: Session = Depends(get_db)):
 def delete_user(user_id: int, db: Session = Depends(get_db), admin_user: models.User = Depends(get_current_admin_user)):
     if user_id == admin_user.id:
         raise HTTPException(status_code=400, detail="Não é permitido excluir o próprio utilizador.")
-    
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="Utilizador não encontrado.")
-    
     username = db_user.username
     db.delete(db_user)
     log_audit_action(db, admin_user.username, "USER_DELETED", f"Utilizador '{username}' (ID: {user_id}) foi excluído.")
@@ -77,7 +73,6 @@ def update_secao(secao_id: int, secao_update: schemas.SeçãoCreate, db: Session
     db_secao = db.query(models.Seção).filter(models.Seção.id == secao_id).first()
     if not db_secao:
         raise HTTPException(status_code=404, detail="Seção não encontrada.")
-    
     old_name = db_secao.nome
     db_secao.nome = secao_update.nome
     try:
@@ -94,12 +89,10 @@ def delete_secao(secao_id: int, db: Session = Depends(get_db), admin_user: model
     db_secao = db.query(models.Seção).filter(models.Seção.id == secao_id).first()
     if not db_secao:
         raise HTTPException(status_code=404, detail="Seção não encontrada.")
-
     if db.query(models.NotaCredito).filter(models.NotaCredito.secao_responsavel_id == secao_id).first():
         raise HTTPException(status_code=400, detail=f"Não é possível excluir '{db_secao.nome}', pois está vinculada a Notas de Crédito.")
     if db.query(models.Empenho).filter(models.Empenho.secao_requisitante_id == secao_id).first():
         raise HTTPException(status_code=400, detail=f"Não é possível excluir '{db_secao.nome}', pois está vinculada a Empenhos.")
-    
     secao_nome = db_secao.nome
     db.delete(db_secao)
     log_audit_action(db, admin_user.username, "SECTION_DELETED", f"Seção '{secao_nome}' (ID: {secao_id}) foi excluída.")
