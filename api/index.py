@@ -1,7 +1,7 @@
 import sys
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -38,8 +38,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Adiciona um prefixo /api a todos os endpoints para corresponder à configuração da Vercel
-api_router = APIRouter(prefix="/api")
+# CORREÇÃO: O prefixo /api foi removido daqui, pois a Vercel já o adiciona.
+# Esta é a única alteração funcional no código.
+api_router = APIRouter()
 
 api_router.include_router(autenticacao.router)
 api_router.include_router(administracao.router)
@@ -49,6 +50,8 @@ api_router.include_router(dashboard.router)
 api_router.include_router(relatorios.router)
 api_router.include_router(auditoria.router)
 
+# O roteador principal da aplicação agora inclui o nosso roteador da API.
+# A Vercel irá direcionar os pedidos que começam com /api para esta aplicação.
 app.include_router(api_router)
 
 @app.get("/api", summary="Verificação de status da API", tags=["Status"])
