@@ -3,18 +3,18 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from .. import models, schemas
-from ..database import get_db
-from .autenticacao import get_current_admin_user, get_current_user, get_password_hash, log_audit_action
+# CORREÇÃO: Importações absolutas
+from app import models, schemas
+from app.database import get_db
+from app.routers.autenticacao import get_current_admin_user, get_current_user, get_password_hash, log_audit_action
 
 router = APIRouter(
     prefix="/admin",
     tags=["Administração"],
-    dependencies=[Depends(get_current_admin_user)] # Protege todas as rotas neste arquivo
+    dependencies=[Depends(get_current_admin_user)]
 )
 
-# --- Endpoints de Gestão de Utilizadores ---
-
+# --- O resto do ficheiro permanece exatamente o mesmo ---
 @router.post("/users", response_model=schemas.UserInDB, status_code=status.HTTP_201_CREATED, summary="Cria um novo utilizador")
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), admin_user: models.User = Depends(get_current_admin_user)):
     if db.query(models.User).filter(models.User.username == user.username).first():
@@ -54,8 +54,6 @@ def delete_user(user_id: int, db: Session = Depends(get_db), admin_user: models.
     log_audit_action(db, admin_user.username, "USER_DELETED", f"Utilizador '{username}' (ID: {user_id}) foi excluído.")
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-# --- Endpoints de Gestão de Seções ---
 
 @router.post("/secoes", response_model=schemas.SeçãoInDB, status_code=status.HTTP_201_CREATED, summary="Adiciona uma nova seção")
 def create_secao(secao: schemas.SeçãoCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):

@@ -11,9 +11,9 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 
-from .. import models
-from ..database import get_db
-from .autenticacao import get_current_user, log_audit_action
+from app import models
+from app.database import get_db
+from app.autenticacao import get_current_user, log_audit_action
 
 router = APIRouter(
     prefix="/relatorios",

@@ -3,9 +3,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from .. import models, schemas
-from ..database import get_db
-from .autenticacao import get_current_admin_user
+# CORREÇÃO: Importações absolutas
+from app import models, schemas
+from app.database import get_db
+from app.routers.autenticacao import get_current_admin_user
 
 router = APIRouter(
     prefix="/audit-logs",

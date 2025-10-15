@@ -7,10 +7,9 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-from .. import models, schemas
-from ..database import get_db
-
-# --- Configuração de Segurança e Autenticação ---
+# CORREÇÃO: Importações absolutas
+from app import models, schemas
+from app.database import get_db
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
@@ -20,13 +19,11 @@ if not SECRET_KEY:
     raise RuntimeError("FATAL: A variável de ambiente SECRET_KEY não está configurada.")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token") # CORREÇÃO: Caminho completo para o token
 
 router = APIRouter(
     tags=["Autenticação"]
 )
-
-# --- Funções Utilitárias de Autenticação ---
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -43,9 +40,6 @@ def create_access_token(data: dict):
 def log_audit_action(db: Session, username: str, action: str, details: str = None):
     log = models.AuditLog(username=username, action=action, details=details)
     db.add(log)
-    # O commit será feito no final da operação principal para garantir atomicidade.
-
-# --- Dependências de Autenticação ---
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
@@ -70,9 +64,6 @@ async def get_current_admin_user(current_user: models.User = Depends(get_current
     if current_user.role != models.UserRole.ADMINISTRADOR:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso restrito a administradores")
     return current_user
-
-
-# --- Endpoints de Autenticação ---
 
 @router.post("/token", response_model=schemas.Token, summary="Autentica o utilizador e retorna um token JWT")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
